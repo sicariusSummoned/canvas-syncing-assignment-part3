@@ -1,13 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <script src="https://npmcdn.com/babel-core@5.8.38/browser.min.js"></script>
-    <script type="text/babel" >
-        "use strict";
-    
-    </script>
-</head>
-<body>
 
+<head>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://npmcdn.com/babel-core@5.8.38/browser.min.js"></script>
+  <script type="text/babel">
+    "use strict";
+    
+
+    //JOIN
+    //1. On connection, create new user and add to list to draw
+    //2. Send new client object to server and add it to list
+    //3. Server sends new list of Client objects to draw
+    //4. Clients draw new list
+
+
+    //UPDATE
+    //5. Client moves its unique object
+    //6. Client sends update to server
+    //7. Server updates list and sends it back to all clients
+    //8. Clients draw updated list
+
+    let canvas;
+    let userNameDisplay;
+    let ctx;
+    let socket;
+    let users = {};
+
+    let self;
+    
+    const addNewUser = () =>{
+      let userName = Math.floor(Math.random()*10000000000).toString();
+      self = userName;
+      
+      
+      let userColor = `rgb(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)})`;    
+      
+      users[userName] = {x:Math.floor(Math.random()*500),y:Math.floor(Math.random()*500 ), width:50, height:50, name:userName, color:userColor, };
+      
+      
+      socket.emit('newUserAdded', users[userName]);
+      console.dir(users[userName]);
+      
+    };
+
+    const drawUsers = (data) =>{
+      users = data;
+      console.log('Client received updated users list');
+      
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      
+      let keys = Object.keys(users);
+      
+      for(let i = 0; i < keys.length; i++){
+        const drawCall = users[keys[i]];
+        ctx.fillStyle = drawCall.color;
+        ctx.fillRect(drawCall.x,drawCall.y,drawCall.width,drawCall.height);
+      }
+    };
+
+
+    const moveUser = (keyPressed) => {
+      
+      let updatedUser = users[self];
+      let validPress = false;
+      
+      switch(keyPressed){
+        case 37:
+          //user pressed left
+          updatedUser.x -= 5;
+          validPress = true;
+          break;
+        case 38:
+          //user pressed up
+          updatedUser.y -= 5;
+          validPress = true;
+          break;
+        case 39:
+          //user pressed right
+          updatedUser.x += 5;
+          validPress = true;
+          break;
+        case 40:
+          //user pressed down
+          updatedUser.y += 5;
+          validPress = true;
+          break;
+        default:
+          //User pressed some other key
+          break;
+      }
+      
+      if(validPress){
+        socket.emit('userMoved',updatedUser);
+      }else{
+        return false;
+      }
+    };
+
+
+    
+    const init = () =>{
+      canvas = document.querySelector("#canvas");
+      userNameDisplay = document.querySelector("#userName");
+      ctx = canvas.getContext("2d");
+      
+      socket = io.connect();
+      
+      socket.on('connect',()=>{
+        addNewUser();
+        userNameDisplay.innerText = self;
+      });
+      
+      socket.on('updateUsersList', drawUsers);
+      
+      document.addEventListener('keydown',(event) =>{
+        moveUser(event.keyCode);                          
+      });
+      
+    }
+    
+
+    window.onload = init;
+    
+  </script>
+</head>
+
+<body>
+  <h1>Your userName: <span id="userName"></span></h1>
+  <canvas id="canvas" height="500" width="500">Please use a Canvas compatible browser!</canvas>
 </body>
+
 </html>
