@@ -54,7 +54,7 @@ const onDisconnect = (sock) => {
 
   socket.on('disconnect', () => {
     delete serverUsers[socket.name];
-    io.sockets.in('room1').emit('udpateUsersList', serverUsers);
+    io.sockets.in('room1').emit('updateUsersList', serverUsers);
     console.log(`User:${socket.name} has left.`);
     console.dir(serverUsers);
     socket.leave('room1');

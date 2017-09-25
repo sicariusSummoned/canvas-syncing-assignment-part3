@@ -4,7 +4,7 @@
   "description": "",
   "main": "./src/server.js",
   "scripts": {
-    "pretest":"eslint ./src --fix",
+    "pretest": "eslint ./src --fix",
     "test": "echo \"Tests Successful!\" ",
     "start": "node ./src/server.js"
   },
